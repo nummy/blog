@@ -1,0 +1,202 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage[]{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\PassOptionsToPackage{hyphens}{url} % url is loaded by hyperref
+\usepackage[unicode=true]{hyperref}
+\hypersetup{
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\newenvironment{Shaded}{}{}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{#1}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{#1}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+
+\date{}
+
+\begin{document}
+
+通常情况下，Django提供的User模型能够满足我们大部分的需求，但是有时候我们需要给User添加一些格外的功能和信息。
+
+Django支持两种方式来扩展User模型。
+
+\begin{itemize}
+\item
+  \textbf{代理模型}
+  如果只是需要添加一些功能性操作，可以基于User创建一个代理模型。
+\item
+  \textbf{关联模型}
+  如果是需要添加格外的字段信息，则可以创建一个与User关联的模型，两者之间的关系为1对1。这个模型通常称之为profile
+  model，因为大部分情况下这些格外信息都与认证无关。
+\end{itemize}
+
+\subsubsection{关联模型}\label{header-n15}
+
+下面创建一个关联模型，给User添加手机信息。
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{class}\NormalTok{ Profile(models.Model):}
+\NormalTok{    user }\OperatorTok{=}\NormalTok{ models.OneToOneField(User)}
+\NormalTok{    mobile }\OperatorTok{=}\NormalTok{ models.CharField(max_length}\OperatorTok{=}\DecValTok{15}\NormalTok{, verbose_name}\OperatorTok{=}\StringTok{u'手机号'}\NormalTok{)}
+
+    \KeywordTok{class}\NormalTok{ Meta:}
+\NormalTok{        verbose_name }\OperatorTok{=} \StringTok{u'附加信息'}
+\NormalTok{        verbose_name_plural }\OperatorTok{=} \StringTok{u'附加信息'}
+\end{Highlighting}
+\end{Shaded}
+
+假设数据库中已经有一个用户同时具有User和Profile模型，则可以Django的关联模型获取数据：
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\OperatorTok{>>>}\NormalTok{ u }\OperatorTok{=}\NormalTok{ User.objects.get(username}\OperatorTok{=}\StringTok{'fsmith'}\NormalTok{)}
+\OperatorTok{>>>}\NormalTok{ mobile }\OperatorTok{=}\NormalTok{ u.profile.mobile }
+\end{Highlighting}
+\end{Shaded}
+
+为了在管理后台中将Profile作为一个字段添加到User管理页面中，需要定义一个
+\texttt{InlineModelAdmin}， 并将它添加到UserAdmin类中。
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ImportTok{from}\NormalTok{ django.contrib }\ImportTok{import}\NormalTok{ admin}
+\ImportTok{from}\NormalTok{ django.contrib.auth.admin }\ImportTok{import}\NormalTok{ UserAdmin}
+\ImportTok{from}\NormalTok{ django.contrib.auth.models }\ImportTok{import}\NormalTok{ User}
+\ImportTok{from}\NormalTok{ .models }\ImportTok{import}\NormalTok{ Profile}
+
+\KeywordTok{class}\NormalTok{ ProfileInline(admin.StackedInline):}
+\NormalTok{    model }\OperatorTok{=}\NormalTok{ Profile}
+\NormalTok{    can_delete }\OperatorTok{=} \VariableTok{False}
+\NormalTok{    verbose_name_plural }\OperatorTok{=} \StringTok{'附加信息'}
+
+\CommentTok{# Define a new User admin}
+\KeywordTok{class}\NormalTok{ UserAdmin(UserAdmin):}
+\NormalTok{    inlines }\OperatorTok{=}\NormalTok{ (ProfileInline,)}
+
+\CommentTok{# Re-register UserAdmin}
+\NormalTok{admin.site.unregister(User)}
+\NormalTok{admin.site.register(User, UserAdmin)}
+\end{Highlighting}
+\end{Shaded}
+
+这些profile模型并没有什么特别之处，它们只是与User模型存在一对一的关联而已。因此，当创建用户的时候，profile并不会自动创建，可以通过\texttt{django.db.models.signals.post\_save}来创建或者更新profile模型。
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# coding:utf-8}
+\ImportTok{from}\NormalTok{ __future__ }\ImportTok{import}\NormalTok{ unicode_literals}
+\ImportTok{from}\NormalTok{ django.db }\ImportTok{import}\NormalTok{ models}
+\ImportTok{from}\NormalTok{ django.contrib.auth.models }\ImportTok{import}\NormalTok{ User}
+\ImportTok{from}\NormalTok{ django.db.models.signals }\ImportTok{import}\NormalTok{ post_save}
+
+
+\CommentTok{# Create your models here.}
+\KeywordTok{class}\NormalTok{ Profile(models.Model):}
+\NormalTok{    user }\OperatorTok{=}\NormalTok{ models.OneToOneField(User)}
+\NormalTok{    mobile }\OperatorTok{=}\NormalTok{ models.CharField(max_length}\OperatorTok{=}\DecValTok{15}\NormalTok{, verbose_name}\OperatorTok{=}\StringTok{u'手机号'}\NormalTok{)}
+
+    \KeywordTok{class}\NormalTok{ Meta:}
+\NormalTok{        verbose_name }\OperatorTok{=} \StringTok{u'附加信息'}
+\NormalTok{        verbose_name_plural }\OperatorTok{=} \StringTok{u'附加信息'}
+
+    \KeywordTok{def}\NormalTok{ save(}\VariableTok{self}\NormalTok{, }\OperatorTok{*}\NormalTok{args, }\OperatorTok{**}\NormalTok{kwargs):}
+        \ControlFlowTok{if} \KeywordTok{not} \VariableTok{self}\NormalTok{.pk:}
+            \ControlFlowTok{try}\NormalTok{:}
+\NormalTok{                p }\OperatorTok{=}\NormalTok{ Profile.objects.get(user}\OperatorTok{=}\VariableTok{self}\NormalTok{.user)}
+                \VariableTok{self}\NormalTok{.pk }\OperatorTok{=}\NormalTok{ p.pk}
+            \ControlFlowTok{except}\NormalTok{ Profile.DoesNotExist:}
+                \ControlFlowTok{pass}
+        \BuiltInTok{super}\NormalTok{(Profile, }\VariableTok{self}\NormalTok{).save(}\OperatorTok{*}\NormalTok{args, }\OperatorTok{**}\NormalTok{kwargs)}
+
+
+\KeywordTok{def}\NormalTok{ create_user_profile(sender, instance, created, }\OperatorTok{**}\NormalTok{kwargs):}
+    \BuiltInTok{print}\NormalTok{(kwargs)}
+    \ControlFlowTok{if}\NormalTok{ created:}
+\NormalTok{        profile, created }\OperatorTok{=}\NormalTok{ Profile.objects.get_or_create(user}\OperatorTok{=}\NormalTok{instance)}
+
+
+\NormalTok{post_save.}\ExtensionTok{connect}\NormalTok{(create_user_profile, sender}\OperatorTok{=}\NormalTok{User)}
+\end{Highlighting}
+\end{Shaded}
+
+\end{document}
