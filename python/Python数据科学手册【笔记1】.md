@@ -1,4 +1,8 @@
-### 获取帮助与文档
+### 获取帮助
+
+```
+$ pip install line_profiler获取帮助与文档
+```
 
 - 使用？获取帮助
 
@@ -148,14 +152,166 @@ hello from Python
 
   当发生异常信息时，可以通过`%debug`进行调试，输入该命令之后，会进入`ipdb`。
 
-  | Command        | Description                              |
-  | -------------- | ---------------------------------------- |
-  | ``list``       | Show the current location in the file    |
-  | ``h(elp)``     | Show a list of commands, or find help on a specific command |
-  | ``q(uit)``     | Quit the debugger and the program        |
-  | ``c(ontinue)`` | Quit the debugger, continue in the program |
-  | ``n(ext)``     | Go to the next step of the program       |
-  | ``<enter>``    | Repeat the previous command              |
-  | ``p(rint)``    | Print variables                          |
-  | ``s(tep)``     | Step into a subroutine                   |
-  | ``r(eturn)``   | Return out of a subroutine               |
+  | 命令             | 描述           |
+  | -------------- | ------------ |
+  | ``list``       | 展示当前行在文件中的位置 |
+  | ``h(elp)``     | 查看帮助命令       |
+  | ``q(uit)``     | 退出调试         |
+  | ``c(ontinue)`` | 退出调试，继续执行    |
+  | ``n(ext)``     | 执行下一步        |
+  | ``<enter>c     | 重复上一步        |
+  | ``p(rint)``    | 打印变量         |
+  | ``s(tep)``     | 进入子程序        |
+  | ``r(eturn)``   | 退出子程序        |
+
+### 性能测试
+
+`IPython`提供了以下魔法命令用于性能测试：
+
+- `%time`测试单条语句的运行时间
+- `%timeit` 重复执行多次单条语句以获取更为精确的时间
+- `%prun`使用profiler运行代码
+- `%lprun`使用profiler逐行执行代码
+- `%memit`测试单条语句的内存使用情况
+- `%mprun`使用memory profiler逐行运行代码
+
+后面四条命令需要安装`line_profiler`和 `memory_profiler` 扩展。
+
+通常`%timeit`的执行速度比`%time`要快，因为它做了一些优化，可以省去部分垃圾回收。
+
+- 使用`%prun`
+
+  首先定义一个函数：
+
+  ```python
+  def sum_of_lists(N):
+      total = 0
+      for i in range(5):
+          L = [j ^ (j >> i) for j in range(N)]
+          total += sum(L)
+      return total
+  ```
+
+  接下来调用命令`%prun`
+
+  ```
+  %prun sum_of_lists(1000000)
+  ```
+
+  输出如下：
+
+  ```
+  14 function calls in 0.714 seconds
+
+     Ordered by: internal time
+
+     ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+          5    0.599    0.120    0.599    0.120 <ipython-input-19>:4(<listcomp>)
+          5    0.064    0.013    0.064    0.013 {built-in method sum}
+          1    0.036    0.036    0.699    0.699 <ipython-input-19>:1(sum_of_lists)
+          1    0.014    0.014    0.714    0.714 <string>:1(<module>)
+          1    0.000    0.000    0.714    0.714 {built-in method exec}
+  ```
+
+  从结果中可以看出，`listcomp`的费时最长，从而我们可以知道要对他进行优化。
+
+- 逐行调试`%lprun`
+
+  先安装以下库
+
+  ```shell
+  $ pip install line_profiler
+  ```
+
+  然后载入`line_profiler`模块
+
+  ```python
+  %load_ext line_profiler
+  ```
+
+  执行以下代码：
+
+  ```
+  %lprun -f sum_of_lists sum_of_lists(5000)
+  ```
+
+  得到结果如下：
+
+  ```
+  Timer unit: 1e-06 s
+
+  Total time: 0.009382 s
+  File: <ipython-input-19-fa2be176cc3e>
+  Function: sum_of_lists at line 1
+
+  Line #      Hits         Time  Per Hit   % Time  Line Contents
+  ==============================================================
+       1                                           def sum_of_lists(N):
+       2         1            2      2.0      0.0      total = 0
+       3         6            8      1.3      0.1      for i in range(5):
+       4         5         9001   1800.2     95.9          L = [j ^ (j >> i) for j in range(N)]
+       5         5          371     74.2      4.0          total += sum(L)
+       6         1            0      0.0      0.0      return total
+  ```
+
+- 使用`%memit`和`%mprun`
+
+  先安装库：
+
+  ```
+  $ pip install memory_profiler
+  ```
+
+  加载库
+
+  ```
+  %load_ext memory_profiler
+  ```
+
+  运行命令`%memit`
+
+  ```
+  %memit sum_of_lists(1000000)
+  ```
+
+  结果输出为：`peak memory: 100.08 MiB, increment: 61.36 MiB`，可以看出该函数大概使用了100M的内存。
+
+  使用`%mprun`逐行测试内存使用情况，但是该命令并不支持直接测试notebook中的代码，而需要从模块中导入才能进行测试。
+
+  所以先创建模块：
+
+  ```python
+  %%file mprun_demo.py
+  def sum_of_lists(N):
+      total = 0
+      for i in range(5):
+          L = [j ^ (j >> i) for j in range(N)]
+          total += sum(L)
+          del L # remove reference to L
+      return total
+  ```
+
+  接下来逐行测试：
+
+  ```python
+  from mprun_demo import sum_of_lists
+  %mprun -f sum_of_lists sum_of_lists(1000000)
+  ```
+
+  结果如下所示：
+
+  ```
+  Filename: ./mprun_demo.py
+
+  Line #    Mem usage    Increment   Line Contents
+  ================================================
+       1     39.0 MiB      0.0 MiB   def sum_of_lists(N):
+       2     39.0 MiB      0.0 MiB       total = 0
+       3     46.5 MiB      7.5 MiB       for i in range(5):
+       4     71.9 MiB     25.4 MiB           L = [j ^ (j >> i) for j in range(N)]
+       5     71.9 MiB      0.0 MiB           total += sum(L)
+       6     46.5 MiB    -25.4 MiB           del L # remove reference to L
+       7     39.1 MiB     -7.4 MiB       return total
+  ```
+
+
