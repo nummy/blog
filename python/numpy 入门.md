@@ -493,5 +493,569 @@ array([[ 2.,  8.,  0.,  6.,  4.,  5.],
        [ 1.,  1.,  8.,  9.,  3.,  6.]])
 ```
 
-如果执行`reshape`时某个维度被设置为-1， 则该维度可以自行计算
+如果执行`reshape`时某个维度被设置为-1， 则该维度值会自行推断。
 
+```python
+>>> a.reshape(3,-1)
+array([[ 2.,  8.,  0.,  6.],
+       [ 4.,  5.,  1.,  1.],
+       [ 8.,  9.,  3.,  6.]])
+```
+
+**合并数组**
+
+不同的数组可以沿着不同的axis进行合并。
+
+```python
+>>> a = np.floor(10*np.random.random((2,2)))
+>>> a
+array([[ 8.,  8.],
+       [ 0.,  0.]])
+>>> b = np.floor(10*np.random.random((2,2)))
+>>> b
+array([[ 1.,  8.],
+       [ 0.,  4.]])
+>>> np.vstack((a,b))
+array([[ 8.,  8.],
+       [ 0.,  0.],
+       [ 1.,  8.],
+       [ 0.,  4.]])
+>>> np.hstack((a,b))
+array([[ 8.,  8.,  1.,  8.],
+       [ 0.,  0.,  0.,  4.]])
+```
+
+`column_stack`的作用与`hstack`类似：
+
+```python
+>>> from numpy import newaxis
+>>> np.column_stack((a,b))   # With 2D arrays
+array([[ 8.,  8.,  1.,  8.],
+       [ 0.,  0.,  0.,  4.]])
+>>> a = np.array([4.,2.])
+>>> b = np.array([2.,8.])
+>>> a[:,newaxis]  # This allows to have a 2D columns vector
+array([[ 4.],
+       [ 2.]])
+>>> np.column_stack((a[:,newaxis],b[:,newaxis]))
+array([[ 4.,  2.],
+       [ 2.,  8.]])
+>>> np.vstack((a[:,newaxis],b[:,newaxis])) # The behavior of vstack is different
+array([[ 4.],
+       [ 2.],
+       [ 2.],
+       [ 8.]])
+```
+
+对于超过二维的多维数组，`hstack`根据第二条axis进行合并，`vstack`根据第一条axis合并。
+
+对于复杂的情况，`r_`和`c_`可以在创建数组的时候进行合并。
+
+```python
+>>> np.r_[1:4,0,4]
+array([1, 2, 3, 0, 4])
+```
+
+**拆分数组**
+
+使用`hsplit`可以在水平方向拆分数组，既可以指定按几等分进行划分，也可以指定划分的位置。
+
+```python
+>>> a = np.floor(10*np.random.random((2,12)))
+>>> a
+array([[ 9.,  5.,  6.,  3.,  6.,  8.,  0.,  7.,  9.,  7.,  2.,  7.],
+       [ 1.,  4.,  9.,  2.,  2.,  1.,  0.,  6.,  2.,  2.,  4.,  0.]])
+>>> np.hsplit(a,3)   # Split a into 3
+[array([[ 9.,  5.,  6.,  3.],
+       [ 1.,  4.,  9.,  2.]]), array([[ 6.,  8.,  0.,  7.],
+       [ 2.,  1.,  0.,  6.]]), array([[ 9.,  7.,  2.,  7.],
+       [ 2.,  2.,  4.,  0.]])]
+>>> np.hsplit(a,(3,4))   # Split a after the third and the fourth column
+[array([[ 9.,  5.,  6.],
+       [ 1.,  4.,  9.]]), array([[ 3.],
+       [ 2.]]), array([[ 6.,  8.,  0.,  7.,  9.,  7.,  2.,  7.],
+       [ 2.,  1.,  0.,  6.,  2.,  2.,  4.,  0.]])]
+```
+
+`vsplit`在垂直方向进行划分，`array_split`可以指定沿哪个轴进行划分。
+
+## 复制和视图
+
+当操作数组的时候，既可能复制数组也可能直接创建一个视图。
+
+**不复制的情况**
+
+简单的赋值并不会复制数组或者其数据。
+
+```python
+>>> a = np.arange(12)
+>>> b = a            # no new object is created
+>>> b is a           # a and b are two names for the same ndarray object
+True
+>>> b.shape = 3,4    # changes the shape of a
+>>> a.shape
+(3, 4)
+```
+
+Python使用引用传值，所以函数调用也不会复制。
+
+```python
+>>> def f(x):
+...     print(id(x))
+...
+>>> id(a)                           # id is a unique identifier of an object
+148293216
+>>> f(a)
+148293216
+```
+
+**视图和浅复制**
+
+不同的数组对象可以共享相同的数据，`view`方法根据原数组创建一个新的视图，这个视图与原数组共享数据。
+
+```python
+>>> c = a.view()
+>>> c is a
+False
+>>> c.base is a                        # c is a view of the data owned by a
+True
+>>> c.flags.owndata
+False
+>>>
+>>> c.shape = 2,6                      # a's shape doesn't change
+>>> a.shape
+(3, 4)
+>>> c[0,4] = 1234                      # a's data changes
+>>> a
+array([[   0,    1,    2,    3],
+       [1234,    5,    6,    7],
+       [   8,    9,   10,   11]])
+```
+
+使用切片返回的也是视图
+
+```python
+>>> s = a[ : , 1:3]     # spaces added for clarity; could also be written "s = a[:,1:3]"
+>>> s[:] = 10           # s[:] is a view of s. Note the difference between s=10 and s[:]=10
+>>> a
+array([[   0,   10,   10,    3],
+       [1234,   10,   10,    7],
+       [   8,   10,   10,   11]])
+```
+
+`深度复制`
+
+调用`copy`方法会执行深度拷贝：
+
+```python
+>>> d = a.copy()                          # a new array object with new data is created
+>>> d is a
+False
+>>> d.base is a                           # d doesn't share anything with a
+False
+>>> d[0,0] = 9999
+>>> a
+array([[   0,   10,   10,    3],
+       [1234,   10,   10,    7],
+       [   8,   10,   10,   11]])
+```
+
+## 进阶
+
+**广播**
+
+广播主要用于处理通用函数不适用不同维度的数组时候的情况。
+
+## 索引进阶
+
+`numpy`提供了功能更为丰富的索引，除了通过简单的整数或者切片进行索引外，还可以通过整数数组和布尔值数组进行索引。
+
+**使用整数索引数组**
+
+```python
+>>> a = np.arange(12)**2                       # the first 12 square numbers
+>>> i = np.array( [ 1,1,3,8,5 ] )              # an array of indices
+>>> a[i]                                       # the elements of a at the positions i
+array([ 1,  1,  9, 64, 25])
+>>>
+>>> j = np.array( [ [ 3, 4], [ 9, 7 ] ] )      # a bidimensional array of indices
+>>> a[j]                                       # the same shape as j
+array([[ 9, 16],
+       [81, 49]])
+```
+
+当数组是多维的时候，每个索引对应数组的第一维度。
+
+```python
+>>> palette = np.array( [ [0,0,0],                # black
+...                       [255,0,0],              # red
+...                       [0,255,0],              # green
+...                       [0,0,255],              # blue
+...                       [255,255,255] ] )       # white
+>>> image = np.array( [ [ 0, 1, 2, 0 ],           # each value corresponds to a color in the palette
+...                     [ 0, 3, 4, 0 ]  ] )
+>>> palette[image]                            # the (2,4,3) color image
+array([[[  0,   0,   0],
+        [255,   0,   0],
+        [  0, 255,   0],
+        [  0,   0,   0]],
+       [[  0,   0,   0],
+        [  0,   0, 255],
+        [255, 255, 255],
+        [  0,   0,   0]]])
+```
+
+我们也可以同时针对多个维度提供索引数组，注意索引数组的`shape`必须一致。
+
+```python
+>>> a = np.arange(12).reshape(3,4)
+>>> a
+array([[ 0,  1,  2,  3],
+       [ 4,  5,  6,  7],
+       [ 8,  9, 10, 11]])
+>>> i = np.array( [ [0,1],                        # indices for the first dim of a
+...                 [1,2] ] )
+>>> j = np.array( [ [2,1],                        # indices for the second dim
+...                 [3,3] ] )
+>>>
+>>> a[i,j]                                     # i and j must have equal shape
+array([[ 2,  5],
+       [ 7, 11]])
+>>>
+>>> a[i,2]
+array([[ 2,  6],
+       [ 6, 10]])
+>>>
+>>> a[:,j]                                     # i.e., a[ : , j]
+array([[[ 2,  1],
+        [ 3,  3]],
+       [[ 6,  5],
+        [ 7,  7]],
+       [[10,  9],
+        [11, 11]]])
+```
+
+自然我们也可以将`i`和`j`放在序列中，然后使用这个序列进行索引：
+
+```python
+>>> l = [i,j]
+>>> a[l]                                       # equivalent to a[i,j]
+array([[ 2,  5],
+       [ 7, 11]])
+```
+
+当时不能将`i`和`j`放进`numpy`数组，因为使用数组会被翻译为索引数组a的第一维度。
+
+```python
+>>> s = np.array( [i,j] )
+>>> a[s]                                       # not what we want
+Traceback (most recent call last):
+  File "<stdin>", line 1, in ?
+IndexError: index (3) out of range (0<=index<=2) in dimension 0
+>>>
+>>> a[tuple(s)]                                # same as a[i,j]
+array([[ 2,  5],
+       [ 7, 11]])
+```
+
+索引数组的一个常见用法就是获取最大值：
+
+```python
+>>> time = np.linspace(20, 145, 5)                 # time scale
+>>> data = np.sin(np.arange(20)).reshape(5,4)      # 4 time-dependent series
+>>> time
+array([  20.  ,   51.25,   82.5 ,  113.75,  145.  ])
+>>> data
+array([[ 0.        ,  0.84147098,  0.90929743,  0.14112001],
+       [-0.7568025 , -0.95892427, -0.2794155 ,  0.6569866 ],
+       [ 0.98935825,  0.41211849, -0.54402111, -0.99999021],
+       [-0.53657292,  0.42016704,  0.99060736,  0.65028784],
+       [-0.28790332, -0.96139749, -0.75098725,  0.14987721]])
+>>>
+>>> ind = data.argmax(axis=0)                   # index of the maxima for each series
+>>> ind
+array([2, 0, 3, 1])
+>>>
+>>> time_max = time[ ind]                       # times corresponding to the maxima
+>>>
+>>> data_max = data[ind, xrange(data.shape[1])] # => data[ind[0],0], data[ind[1],1]...
+>>>
+>>> time_max
+array([  82.5 ,   20.  ,  113.75,   51.25])
+>>> data_max
+array([ 0.98935825,  0.84147098,  0.99060736,  0.6569866 ])
+>>>
+>>> np.all(data_max == data.max(axis=0))
+True
+```
+
+也可以使用索引修改原始数组：
+
+```python
+>>> a = np.arange(5)
+>>> a
+array([0, 1, 2, 3, 4])
+>>> a[[1,3,4]] = 0
+>>> a
+array([0, 0, 2, 0, 0])
+```
+
+如果索引中存在重复的值，则以最后那个值对应的赋值为准。
+
+```python
+>>> a = np.arange(5)
+>>> a[[0,0,2]]=[1,2,3]
+>>> a
+array([2, 1, 3, 3, 4])
+```
+
+这样做和合理，但是也要注意使用`s +=`的操作时，结果可能跟你预期的并不一样。
+
+```python
+>>> a = np.arange(5)
+>>> a[[0,0,2]]+=1
+>>> a
+array([1, 1, 3, 3, 4])
+```
+
+尽管0出现了两次，当时对应的值只增加了一次，这是因为Python要求`a+=1`等价于`a = a+1`
+
+**使用布尔值数组索引**
+
+当我们使用布尔值索引的时候，值为`True`则获取元素，如果为`False`则忽略。
+
+```python
+>>> a = np.arange(12).reshape(3,4)
+>>> b = a > 4
+>>> b                                          # b is a boolean with a's shape
+array([[False, False, False, False],
+       [False,  True,  True,  True],
+       [ True,  True,  True,  True]], dtype=bool)
+>>> a[b]                                       # 1d array with the selected elements
+array([ 5,  6,  7,  8,  9, 10, 11])
+```
+
+这个属性在赋值时特别有用：
+
+```python
+>>> a[b] = 0                                   # All elements of 'a' higher than 4 become 0
+>>> a
+array([[0, 1, 2, 3],
+       [4, 0, 0, 0],
+       [0, 0, 0, 0]])
+```
+
+下面是一个使用布尔值索引数组来绘制分形图的例子：
+
+```python
+>>> import numpy as np
+>>> import matplotlib.pyplot as plt
+>>> def mandelbrot( h,w, maxit=20 ):
+...     """Returns an image of the Mandelbrot fractal of size (h,w)."""
+...     y,x = np.ogrid[ -1.4:1.4:h*1j, -2:0.8:w*1j ]
+...     c = x+y*1j
+...     z = c
+...     divtime = maxit + np.zeros(z.shape, dtype=int)
+...
+...     for i in range(maxit):
+...         z = z**2 + c
+...         diverge = z*np.conj(z) > 2**2            # who is diverging
+...         div_now = diverge & (divtime==maxit)  # who is diverging now
+...         divtime[div_now] = i                  # note when
+...         z[diverge] = 2                        # avoid diverging too much
+...
+...     return divtime
+>>> plt.imshow(mandelbrot(400,400))
+>>> plt.show()
+```
+
+![1.png](https://docs.scipy.org/doc/numpy-dev/_images/quickstart-1.png)
+
+另外一种使用布尔值索引数组的方法是针对每个维度提供一个一维的布尔值数组。
+
+```python
+>>> a = np.arange(12).reshape(3,4)
+>>> b1 = np.array([False,True,True])             # first dim selection
+>>> b2 = np.array([True,False,True,False])       # second dim selection
+>>>
+>>> a[b1,:]                                   # selecting rows
+array([[ 4,  5,  6,  7],
+       [ 8,  9, 10, 11]])
+>>>
+>>> a[b1]                                     # same thing
+array([[ 4,  5,  6,  7],
+       [ 8,  9, 10, 11]])
+>>>
+>>> a[:,b2]                                   # selecting columns
+array([[ 0,  2],
+       [ 4,  6],
+       [ 8, 10]])
+>>>
+>>> a[b1,b2]                                  # a weird thing to do
+array([ 4, 10])
+```
+
+注意索引数组的长度必须与数组的维度匹配。
+
+**ix_()函数**
+
+该函数用来组合不同的矢量。
+
+```python
+>>> a = np.array([2,3,4,5])
+>>> b = np.array([8,5,4])
+>>> c = np.array([5,4,6,8,3])
+>>> ax,bx,cx = np.ix_(a,b,c)
+>>> ax
+array([[[2]],
+       [[3]],
+       [[4]],
+       [[5]]])
+>>> bx
+array([[[8],
+        [5],
+        [4]]])
+>>> cx
+array([[[5, 4, 6, 8, 3]]])
+>>> ax.shape, bx.shape, cx.shape
+((4, 1, 1), (1, 3, 1), (1, 1, 5))
+>>> result = ax+bx*cx
+>>> result
+array([[[42, 34, 50, 66, 26],
+        [27, 22, 32, 42, 17],
+        [22, 18, 26, 34, 14]],
+       [[43, 35, 51, 67, 27],
+        [28, 23, 33, 43, 18],
+        [23, 19, 27, 35, 15]],
+       [[44, 36, 52, 68, 28],
+        [29, 24, 34, 44, 19],
+        [24, 20, 28, 36, 16]],
+       [[45, 37, 53, 69, 29],
+        [30, 25, 35, 45, 20],
+        [25, 21, 29, 37, 17]]])
+>>> result[3,2,4]
+17
+>>> a[3]+b[2]*c[4]
+17
+```
+
+也可以使用`reduce`实现：
+
+```python
+>>> def ufunc_reduce(ufct, *vectors):
+...    vs = np.ix_(*vectors)
+...    r = ufct.identity
+...    for v in vs:
+...        r = ufct(r,v)
+...    return r
+```
+
+然后调用该函数：
+
+```python
+>>> ufunc_reduce(np.add,a,b,c)
+array([[[15, 14, 16, 18, 13],
+        [12, 11, 13, 15, 10],
+        [11, 10, 12, 14,  9]],
+       [[16, 15, 17, 19, 14],
+        [13, 12, 14, 16, 11],
+        [12, 11, 13, 15, 10]],
+       [[17, 16, 18, 20, 15],
+        [14, 13, 15, 17, 12],
+        [13, 12, 14, 16, 11]],
+       [[18, 17, 19, 21, 16],
+        [15, 14, 16, 18, 13],
+        [14, 13, 15, 17, 12]]])
+```
+
+## 线性代数
+
+**简单的矩阵操作**
+
+```python
+>>> import numpy as np
+>>> a = np.array([[1.0, 2.0], [3.0, 4.0]])
+>>> print(a)
+[[ 1.  2.]
+ [ 3.  4.]]
+
+>>> a.transpose()
+array([[ 1.,  3.],
+       [ 2.,  4.]])
+
+>>> np.linalg.inv(a)
+array([[-2. ,  1. ],
+       [ 1.5, -0.5]])
+
+>>> u = np.eye(2) # unit 2x2 matrix; "eye" represents "I"
+>>> u
+array([[ 1.,  0.],
+       [ 0.,  1.]])
+>>> j = np.array([[0.0, -1.0], [1.0, 0.0]])
+
+>>> np.dot (j, j) # matrix product
+array([[-1.,  0.],
+       [ 0., -1.]])
+
+>>> np.trace(u)  # trace
+2.0
+
+>>> y = np.array([[5.], [7.]])
+>>> np.linalg.solve(a, y)
+array([[-3.],
+       [ 4.]])
+
+>>> np.linalg.eig(j)
+(array([ 0.+1.j,  0.-1.j]), array([[ 0.70710678+0.j        ,  0.70710678-0.j        ],
+       [ 0.00000000-0.70710678j,  0.00000000+0.70710678j]]))
+```
+
+## 常用技巧
+
+**自动转型**
+
+当修改数组的维度时，如果省略其中一个维度值，`numpy`会自动推断该值：
+
+```python
+>>> a = np.arange(30)
+>>> a.shape = 2,-1,3  # -1 means "whatever is needed"
+>>> a.shape
+(2, 5, 3)
+>>> a
+array([[[ 0,  1,  2],
+        [ 3,  4,  5],
+        [ 6,  7,  8],
+        [ 9, 10, 11],
+        [12, 13, 14]],
+       [[15, 16, 17],
+        [18, 19, 20],
+        [21, 22, 23],
+        [24, 25, 26],
+        [27, 28, 29]]])
+```
+
+**直方图**
+
+`numpy` 提供了 `histogram`函数用于获取直方图的相关数据。注意matplotlib也提供了函数`hist`，但是两者不一样，`histogram`只是提供数组，而`hist`会自动绘图。
+
+```python
+>>> import numpy as np
+>>> import matplotlib.pyplot as plt
+>>> # Build a vector of 10000 normal deviates with variance 0.5^2 and mean 2
+>>> mu, sigma = 2, 0.5
+>>> v = np.random.normal(mu,sigma,10000)
+>>> # Plot a normalized histogram with 50 bins
+>>> plt.hist(v, bins=50, normed=1)       # matplotlib version (plot)
+>>> plt.show()
+```
+
+![../_images/quickstart-2_00_00.png](https://docs.scipy.org/doc/numpy-dev/_images/quickstart-2_00_00.png)
+
+```python
+>> # Compute the histogram with numpy and then plot it
+>>> (n, bins) = np.histogram(v, bins=50, normed=True)  # NumPy version (no plot)
+>>> plt.plot(.5*(bins[1:]+bins[:-1]), n)
+>>> plt.show()
+```
+
+![../_images/quickstart-2_01_00.png](https://docs.scipy.org/doc/numpy-dev/_images/quickstart-2_01_00.png)
