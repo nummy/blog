@@ -37,3 +37,18 @@ big_array = np.random.rand(1000000)
 
 注意`sum`和`np.sum`是两个不同的函数，`np.sum`支持多维数组，`sum`并不支持。
 
+## 最小值和最大值
+
+Python提供了函数`min()`和`max()`用于计算最小值和最大值。
+
+```
+min(big_array), max(big_array)
+# (1.1717128136634614e-06, 0.9999976784968716)
+```
+
+`Numpy`提供了类似的语法，但是计算速度更快：
+
+```python
+np.min(big_array), np.max(big_array)
+```
+
