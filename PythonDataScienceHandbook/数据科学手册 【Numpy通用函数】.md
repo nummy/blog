@@ -89,7 +89,7 @@ array([[  1,   2,   4],
        [ 64, 128, 256]])
 ```
 
-## 常用通用函数
+## 探索通用函数
 
 通用函数分为以下两种：
 
@@ -318,5 +318,117 @@ print("log(1 + x) =", np.log1p(x))
 ```
 exp(x) - 1 = [ 0.          0.0010005   0.01005017  0.10517092]
 log(1 + x) = [ 0.          0.0009995   0.00995033  0.09531018]
+```
+
+### 特殊的通用函数
+
+`Numpy`提供了很多通用函数，例如双曲三角函数，位运算，比较运算，角度和弧度的互转操作等等，更多函数可以查看`Numpy`文档。
+
+`scipy.special`提供了更为特殊的函数，下面是一个简单示例:
+
+```python
+from scipy import special
+# Gamma functions (generalized factorials) and related functions
+x = [1, 5, 10]
+print("gamma(x)     =", special.gamma(x))
+print("ln|gamma(x)| =", special.gammaln(x))
+print("beta(x, 2)   =", special.beta(x, 2))
+# Error function (integral of Gaussian)
+# its complement, and its inverse
+x = np.array([0, 0.3, 0.7, 1.0])
+print("erf(x)  =", special.erf(x))
+print("erfc(x) =", special.erfc(x))
+print("erfinv(x) =", special.erfinv(x))
+```
+
+结果为：
+
+```
+gamma(x)     = [  1.00000000e+00   2.40000000e+01   3.62880000e+05]
+ln|gamma(x)| = [  0.           3.17805383  12.80182748]
+beta(x, 2)   = [ 0.5         0.03333333  0.00909091]
+erf(x)  = [ 0.          0.32862676  0.67780119  0.84270079]
+erfc(x) = [ 1.          0.67137324  0.32219881  0.15729921]
+erfinv(x) = [ 0.          0.27246271  0.73286908         inf]
+```
+
+## 通用函数进阶
+
+**指定输出**
+
+对于大规模的运算，有时想指定计算结果的输出源，而不是暂存在一个临时数组中。对于所有的通用函数，都支持一个`out`关键字。
+
+```python
+x = np.arange(5)
+y = np.empty(5)
+np.multiply(x, 10, out=y)
+print(y)
+```
+
+结果为：
+
+```
+[  0.  10.  20.  30.  40.]
+```
+
+也可以与数组视图一起配合使用：
+
+```python
+y = np.zeros(10)
+np.power(2, x, out=y[::2])
+print(y)
+```
+
+结果为：
+
+```
+[  1.   0.   2.   0.   4.   0.   8.   0.  16.   0.]
+```
+
+如果直接写成`y[::2] = 2 ** x`，会导致创建一个临时数组保存`2**x`的结果，然后才是将这个数组的结果复制到数组y。如果计算量比较小，区别并不大，但是如果计算量很大的，使用`out`关键字节省的空间可想而知。
+
+### 聚合
+
+对于二元通用函数，可以直接对对象执行有趣的聚合操作，例如利用`reduce`方法对数组求和。
+
+```python
+x = np.arange(1, 6)
+np.add.reduce(x)
+# 15
+```
+
+同样的，也可以利用`reduce`计算数组元素的乘积：
+
+```
+np.multiply.reduce(x)
+# 120
+```
+
+如果想要存储计算的中间结果，可以使用`accumulate`方法：
+
+```python
+np.add.accumulate(x)
+# array([ 1,  3,  6, 10, 15], dtype=int32)
+np.multiply.accumulate(x)
+# array([  1,   2,   6,  24, 120], dtype=int32)
+```
+
+### 外积
+
+通用函数还可以用来计算外积：
+
+```
+x = np.arange(1, 6)
+np.multiply.outer(x, x)
+```
+
+结果为：
+
+```
+array([[ 1,  2,  3,  4,  5],
+       [ 2,  4,  6,  8, 10],
+       [ 3,  6,  9, 12, 15],
+       [ 4,  8, 12, 16, 20],
+       [ 5, 10, 15, 20, 25]])
 ```
 
