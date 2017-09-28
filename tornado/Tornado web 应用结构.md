@@ -112,4 +112,6 @@ def prepare(self):
 
 如果处理器抛出异常，Tornado将调用`RequestHandler.write_error`来生成一个错误页面。`Tornado.web.HTTPError`可以用于生成特殊的状态码，所有其它异常将返回500状态码。
 
-默认的错误页面包含了调试模式下的堆栈跟踪信息和一行错误描述信息。
+默认的错误页面包含了调试模式下的堆栈跟踪信息和一行错误描述信息（例如：“500: Internal Server Error”）。如果需要自定制一个错误页面，可以重写`RequestHandler.write_error`方法。这个方法可以调用`write`或者`render`来生成一个错误页面。如果错误是异常导致的，一个三元组`exc_info`也会作为参数传递给该方法。
+
+也可以从正常的请求中生成错误页面，只需要调用`set_status`，生成响应，然后返回即可。
