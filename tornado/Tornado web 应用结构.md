@@ -114,4 +114,77 @@ def prepare(self):
 
 默认的错误页面包含了调试模式下的堆栈跟踪信息和一行错误描述信息（例如：“500: Internal Server Error”）。如果需要自定制一个错误页面，可以重写`RequestHandler.write_error`方法。这个方法可以调用`write`或者`render`来生成一个错误页面。如果错误是异常导致的，一个三元组`exc_info`也会作为参数传递给该方法。
 
-也可以从正常的请求中生成错误页面，只需要调用`set_status`，生成响应，然后返回即可。
+也可以从正常的请求中生成错误页面，只需要调用`set_status`，生成响应，然后返回即可。Tornado提供了一个特殊的异常`tornado.web.Finish`，它用于中断请求，而不会调用`write_error`，适用于不能有返回的情况。
+
+对于404错误，使用`default_handler_class`，这个处理器应该重写`prepare`方法，以便能处理所有的HTTP请求方法，它还应该也生成一个错误页面：抛出一个`HttpError(404)`异常并重写`write_error`方法，或者调用`self.set_status(404)`然后直接通过`prepare()`方法生成响应。
+
+### 重定向
+
+在Tornado中两种方法可以重定向，`RequestHandler.redirect`和`RedirectHandler`。
+
+我们可以使用`RequestHandler`的`self.redirect()`方法来重定向至其它请求，这个方法接收一个可选参数`permanent`用于指明这个重定向是否为永久重定向。默认为`False`，这时返回的响应码为`302`。如果`permanent`为`True`，则状态码为`301`。
+
+通过`RedirectHandler`我们可以直接在应用的路由表中定义重定向，例如，配置静态重定向。
+
+```python
+app = tornado.web.Application([
+    url(r"/app", tornado.web.RedirectHandler,
+        dict(url="http://itunes.apple.com/my-app-id")),
+    ])
+```
+
+`RedirectHandler`也支持正则表达式，下面的重定向配置将以`/pictures/`开头的`url`重定向至`/photos/`。
+
+```python
+app = tornado.web.Application([
+    url(r"/photos/(.*)", MyPhotoHandler),
+    url(r"/pictures/(.*)", tornado.web.RedirectHandler,
+        dict(url=r"/photos/{0}")),
+    ])
+```
+
+跟`RequestHandler.redirect`不同，`RedirectHandler`默认使用永久重定向。这是因为路由表不会在运行时修改，所以默认为永久重定向。而处理器中的重定向是可以改动的。如果需要通过`RequestHandler`来返回临时重定向，则需传递参数`permanent=False`给`RedirectHandler`。
+
+### 异步处理器
+
+Tornado的处理器默认是同步的，当`get()`或者`post()`方法返回的时候，请求就被认定为已结束，然后响应被发送给请求方。当一个处理器在处理请求时，其他请求都处于阻塞状态，所以对于执行时间比较长的任务都应该改为异步请求。
+
+处理异步请求最简单的方式是使用`coroutine`修饰符，通过`yield`关键字我们可以执行非阻塞操作，响应信息要等协程执行完才会返回。
+
+有些情况下，协程可能没有回调方便，这时可以使用`tornado.web.asynchronous`修饰器。当使用该修饰器时，响应不会自动发送，相反，请求会一直保持打开，直到回调调用`RequestHandler.finish`。应用程序决定这个方法是否需要调用，如过没有调用，则会挂住。
+
+下面的代码使用回调获取API信息：
+
+```python
+class MainHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        http = tornado.httpclient.AsyncHTTPClient()
+        http.fetch("http://friendfeed-api.com/v2/feed/bret",
+                   callback=self.on_response)
+
+    def on_response(self, response):
+        if response.error: raise tornado.web.HTTPError(500)
+        json = tornado.escape.json_decode(response.body)
+        self.write("Fetched " + str(len(json["entries"])) + " entries "
+                   "from the FriendFeed API")
+        self.finish()
+```
+
+当`get()`方法返回的时候，请求并没有结束，当HTTP client调用`on_repsonse`时，请求还是打开的，直到调用`self.finish()`方法，响应才被发送。
+
+下面是使用协程的例子：
+
+```python
+class MainHandler(tornado.web.RequestHandler):
+    @tornado.gen.coroutine
+    def get(self):
+        http = tornado.httpclient.AsyncHTTPClient()
+        response = yield http.fetch("http://friendfeed-api.com/v2/feed/bret")
+        json = tornado.escape.json_decode(response.body)
+        self.write("Fetched " + str(len(json["entries"])) + " entries "
+                   "from the FriendFeed API")
+```
+
+对于更复杂的例子，可以查看自带的聊天室例子，例子中使用了长轮询，使用长轮询需要重写`on_connection_close`方法。
+
